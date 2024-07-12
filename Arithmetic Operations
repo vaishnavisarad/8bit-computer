@@ -1,0 +1,2 @@
+let z = x + y;
+let w = z * 2 - y;
