@@ -1,3 +1,50 @@
+// SimpleLang Example Program
+
+// Variable Declaration and Assignment
+let x = 10;
+let y = 20;
+
+// Arithmetic Operations
+let z = x + y;
+let w = z * 2 - y;
+
+// Conditional Statement
+if (x < y) {
+    print("x is less than y");
+} else {
+    print("x is not less than y");
+}
+
+// Looping
+for (let i = 1; i <= 5; i = i + 1) {
+    print(i);
+}
+
+// Function Definition and Call
+function add(a, b) {
+    return a + b;
+}
+
+let result = add(10, 20);
+print(result);  // Output: 30
+
+// Arrays and Indexing
+let numbers = [1, 2, 3, 4, 5];
+let firstNumber = numbers[0];
+print(firstNumber);  // Output: 1
+
+// Input and Output
+let name = input("Enter your name: ");
+print("Hello, " + name + "!");
+
+// Comments
+// This is a single-line comment
+
+/*
+   This is a
+   multi-line comment
+*/
+
 let x = 10;
 let y = 20;
 if (x < y) {
