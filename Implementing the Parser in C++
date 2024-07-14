@@ -1,0 +1,126 @@
+#ifndef PARSER_H
+#define PARSER_H
+
+#include "lexer.h"
+#include <memory>
+#include <vector>
+
+enum NodeType {
+    NODE_VAR_DECL, NODE_ASSIGN, NODE_BIN_OP, NODE_NUM, NODE_VAR, NODE_IF
+};
+
+struct ASTNode {
+    NodeType type;
+    std::string varName;
+    int numValue;
+    char op;
+    std::shared_ptr<ASTNode> left;
+    std::shared_ptr<ASTNode> right;
+    std::shared_ptr<ASTNode> condition;
+    std::shared_ptr<ASTNode> trueBranch;
+    std::shared_ptr<ASTNode> falseBranch;
+};
+
+class Parser {
+public:
+    Parser(Lexer& lexer);
+    std::shared_ptr<ASTNode> parse();
+private:
+    Lexer& lexer;
+    Token currentToken;
+    Token getNextToken();
+    void expect(TokenType type);
+    std::shared_ptr<ASTNode> parseVarDeclaration();
+    std::shared_ptr<ASTNode> parseExpression();
+    std::shared_ptr<ASTNode> parseTerm();
+    std::shared_ptr<ASTNode> parseIfStatement();
+};
+
+#endif // PARSER_H
+#include "parser.h"
+#include <iostream>
+
+Parser::Parser(Lexer& lexer) : lexer(lexer) {
+    currentToken = lexer.getNextToken();
+}
+
+Token Parser::getNextToken() {
+    return lexer.getNextToken();
+}
+
+void Parser::expect(TokenType type) {
+    if (currentToken.type != type) {
+        std::cerr << "Syntax error: expected " << type << ", got " << currentToken.type << std::endl;
+        exit(1);
+    }
+    currentToken = getNextToken();
+}
+
+std::shared_ptr<ASTNode> Parser::parse() {
+    return parseVarDeclaration(); // For simplicity, starting with var declaration
+}
+
+std::shared_ptr<ASTNode> Parser::parseVarDeclaration() {
+    expect(TOKEN_INT);
+    std::string varName = currentToken.text;
+    expect(TOKEN_IDENTIFIER);
+    expect(TOKEN_ASSIGN);
+    auto exprNode = parseExpression();
+    expect(TOKEN_SEMICOLON);
+
+    auto node = std::make_shared<ASTNode>();
+    node->type = NODE_VAR_DECL;
+    node->varName = varName;
+    node->left = exprNode;
+    return node;
+}
+
+std::shared_ptr<ASTNode> Parser::parseExpression() {
+    auto left = parseTerm();
+    while (currentToken.type == TOKEN_PLUS || currentToken.type == TOKEN_MINUS) {
+        char op = currentToken.text[0];
+        currentToken = getNextToken();
+        auto right = parseTerm();
+        auto node = std::make_shared<ASTNode>();
+        node->type = NODE_BIN_OP;
+        node->op = op;
+        node->left = left;
+        node->right = right;
+        left = node;
+    }
+    return left;
+}
+
+std::shared_ptr<ASTNode> Parser::parseTerm() {
+    if (currentToken.type == TOKEN_NUMBER) {
+        auto node = std::make_shared<ASTNode>();
+        node->type = NODE_NUM;
+        node->numValue = std::stoi(currentToken.text);
+        currentToken = getNextToken();
+        return node;
+    } else if (currentToken.type == TOKEN_IDENTIFIER) {
+        auto node = std::make_shared<ASTNode>();
+        node->type = NODE_VAR;
+        node->varName = currentToken.text;
+        currentToken = getNextToken();
+        return node;
+    } else {
+        std::cerr << "Syntax error: unexpected token " << currentToken.text << std::endl;
+        exit(1);
+    }
+    return nullptr;
+}
+
+std::shared_ptr<ASTNode> Parser::parseIfStatement() {
+    expect(TOKEN_IF);
+    auto condition = parseExpression();
+    expect(TOKEN_LBRACE);
+    auto trueBranch = parse();
+    expect(TOKEN_RBRACE);
+
+    auto node = std::make_shared<ASTNode>();
+    node->type = NODE_IF;
+    node->condition = condition;
+    node->trueBranch = trueBranch;
+    return node;
+}
