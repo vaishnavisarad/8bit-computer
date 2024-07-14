@@ -1,0 +1,90 @@
+#ifndef LEXER_H
+#define LEXER_H
+
+#include <string>
+#include <vector>
+
+enum TokenType {
+    TOKEN_INT, TOKEN_IDENTIFIER, TOKEN_NUMBER, TOKEN_ASSIGN,
+    TOKEN_PLUS, TOKEN_MINUS, TOKEN_IF, TOKEN_EQUAL, TOKEN_LBRACE, TOKEN_RBRACE,
+    TOKEN_SEMICOLON, TOKEN_UNKNOWN, TOKEN_EOF
+};
+
+struct Token {
+    TokenType type;
+    std::string text;
+};
+
+class Lexer {
+public:
+    Lexer(const std::string& source);
+    Token getNextToken();
+private:
+    std::string source;
+    size_t index;
+    char getChar();
+    void ungetChar();
+};
+
+#endif // LEXER_H
+#include "lexer.h"
+#include <cctype>
+#include <iostream>
+
+Lexer::Lexer(const std::string& source) : source(source), index(0) {}
+
+char Lexer::getChar() {
+    if (index >= source.length()) {
+        return EOF;
+    }
+    return source[index++];
+}
+
+void Lexer::ungetChar() {
+    if (index > 0) {
+        --index;
+    }
+}
+
+Token Lexer::getNextToken() {
+    Token token;
+    char c;
+
+    while ((c = getChar()) != EOF) {
+        if (isspace(c)) continue;
+
+        if (isalpha(c)) {
+            token.text = c;
+            while (isalnum(c = getChar())) {
+                token.text += c;
+            }
+            ungetChar();
+            if (token.text == "int") token.type = TOKEN_INT;
+            else if (token.text == "if") token.type = TOKEN_IF;
+            else token.type = TOKEN_IDENTIFIER;
+            return token;
+        }
+
+        if (isdigit(c)) {
+            token.text = c;
+            while (isdigit(c = getChar())) {
+                token.text += c;
+            }
+            ungetChar();
+            token.type = TOKEN_NUMBER;
+            return token;
+        }
+
+        switch (c) {
+            case '=': token.type = TOKEN_ASSIGN; token.text = "="; return token;
+            case '+': token.type = TOKEN_PLUS; token.text = "+"; return token;
+            case '-': token.type = TOKEN_MINUS; token.text = "-"; return token;
+            case ';': token.type = TOKEN_SEMICOLON; token.text = ";"; return token;
+            case '{': token.type = TOKEN_LBRACE; token.text = "{"; return token;
+            case '}': token.type = TOKEN_RBRACE; token.text = "}"; return token;
+        }
+    }
+    token.type = TOKEN_EOF;
+    token.text = "";
+    return token;
+}
