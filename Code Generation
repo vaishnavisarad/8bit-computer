@@ -1,0 +1,45 @@
+void generateCode(const std::shared_ptr<ASTNode>& node) {
+    switch (node->type) {
+        case NODE_VAR_DECL:
+            std::cout << "LOAD " << node->left->numValue << ", R1\n";
+            std::cout << "STORE R1, " << node->varName << "\n";
+            break;
+        case NODE_BIN_OP:
+            generateCode(node->left);
+            std::cout << "PUSH R1\n";
+            generateCode(node->right);
+            std::cout << "POP R2\n";
+            if (node->op == '+') {
+                std::cout << "ADD R1, R2\n";
+            } else if (node->op == '-') {
+                std::cout << "SUB R1, R2\n";
+            }
+            break;
+        case NODE_NUM:
+            std::cout << "LOAD " << node->numValue << ", R1\n";
+            break;
+        case NODE_VAR:
+            std::cout << "LOAD " << node->varName << ", R1\n";
+            break;
+        case NODE_IF:
+            generateCode(node->condition);
+            std::cout << "JZ ELSE\n";
+            generateCode(node->trueBranch);
+            std::cout << "ELSE:\n";
+            break;
+        default:
+            std::cerr << "Unknown node type\n";
+            break;
+    }
+}
+
+int main() {
+    std::string source = "int x = 10;";
+    Lexer lexer(source);
+    Parser parser(lexer);
+
+    auto ast = parser.parse();
+    generateCode(ast);
+
+    return 0;
+}
